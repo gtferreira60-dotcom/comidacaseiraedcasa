@@ -1,0 +1,70 @@
+mutation CreateDemoData @transaction @auth(level: PUBLIC, insecureReason: "This operation is used to seed data and is safe to expose to the public.") {
+  user_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      username: "demouser1",
+      email: "demouser1@example.com",
+      createdAt: "2024-04-26T12:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440001",
+      username: "demouser2",
+      email: "demouser2@example.com",
+      createdAt: "2024-04-26T12:00:00Z"
+    }
+  ])
+  recipe_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440002",
+      authorId: "550e8400-e29b-41d4-a716-446655440000",
+      title: "Demo Recipe 1",
+      description: "Example recipe from demouser1",
+      instructions: "Do some stuff",
+      cookTimeMinutes: 30,
+      prepTimeMinutes: 15,
+      servings: 4,
+      cuisine: "Italian",
+      mealType: "Dinner",
+      createdAt: "2024-04-26T12:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440003",
+      authorId: "550e8400-e29b-41d4-a716-446655440001",
+      title: "Demo Recipe 2",
+      description: "Example recipe from demouser2",
+      instructions: "Do some other stuff",
+      cookTimeMinutes: 45,
+      prepTimeMinutes: 20,
+      servings: 6,
+      cuisine: "Mexican",
+      mealType: "Lunch",
+      createdAt: "2024-04-26T12:00:00Z"
+    }
+  ])
+  ingredient_insertMany(data: [
+    {
+      recipeId: "550e8400-e29b-41d4-a716-446655440002",
+      name: "Pasta",
+      quantity: "1",
+      unit: "pound"
+    },
+    {
+      recipeId: "550e8400-e29b-41d4-a716-446655440002",
+      name: "Tomato Sauce",
+      quantity: "2",
+      unit: "cups"
+    },
+    {
+      recipeId: "550e8400-e29b-41d4-a716-446655440003",
+      name: "Tortillas",
+      quantity: "6",
+      unit: "count"
+    },
+    {
+      recipeId: "550e8400-e29b-41d4-a716-446655440003",
+      name: "Ground Beef",
+      quantity: "1",
+      unit: "pound"
+    }
+  ])
+}

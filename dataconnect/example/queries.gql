@@ -1,0 +1,34 @@
+mutation CreateUser @auth(level: USER) {
+  user_insert(data: {
+    username_expr: "auth.uid",
+    email: "example@example.com",
+    createdAt_expr: "request.time",
+    displayName: "New User"
+  })
+}
+
+query GetRecipes @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  recipes {
+    id
+    title
+    description
+  }
+}
+
+mutation AddRecipeToCollection($collectionId: UUID!, $recipeId: UUID!) @auth(level: USER) {
+  collectionRecipe_insert(data: {
+    collectionId: $collectionId,
+    recipeId: $recipeId,
+    addedAt_expr: "request.time"
+  })
+}
+
+query GetMyCollections @auth(level: USER) {
+  collections(where: {
+    userId_expr: "auth.uid"
+  }) {
+    id
+    name
+    description
+  }
+}

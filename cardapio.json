@@ -1,0 +1,16 @@
+{
+  "nome": "EDCASA",
+  "descricao": "Comida caseira feita com carinho",
+  "itens": [
+    {
+      "nome": "Quentinha completa",
+      "descricao": "Arroz, feijão, bife acebolado, salada e pirão",
+      "preco": 20
+    },
+    {
+      "nome": "Promoção",
+      "descricao": "2 quentinhas pelo preço especial",
+      "preco": 35
+    }
+  ]
+}

@@ -12,8 +12,8 @@ const CONFIG = {
 
 /* PREÇOS */
 const precosQuentinha = {
-  normal: { bairro: 22, fora: 25 },
-  grande: { bairro: 25, fora: 27 }
+    M: { bairro: 22, fora: 25 },
+    G: { bairro: 25, fora: 27 }
 };
 const precosBatata = { P:5, M:8, G:10 };
 

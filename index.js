@@ -140,35 +140,69 @@ function gerarQuentinhas() {
     div.className = "box";
     div.id = "quentinha" + q;
 
-    div.innerHTML = '<h2>Quentinha ' + q + '</h2>' +
+    div.innerHTML =
+      '<h2>Quentinha ' + q + '</h2>' +
       '<select class="tipoQuentinha">' +
       '<option value="">Tipo de quentinha</option>' +
       '<option value="normal">Normal</option>' +
       '<option value="grande">G</option>' +
       '</select>' +
-      '<h3>Prato principal</h3>' +
-      pratoPrincipal.map(i => '<label><input type="checkbox" class="prato" value="'+i+'"> '+i+'</label>').join('') +
-      '<h3>Acompanhamentos (máx. 2)</h3>' +
-      acompanhamentos.map(i => '<label><input type="checkbox" class="acomp" value="'+i+'"> '+i+'</label>').join('') +
+
+      '<h3>Feijão (máx. 2)</h3>' +
+      pratoPrincipal.filter(i => i.includes("Feijão"))
+        .map(i => '<label><input type="checkbox" class="feijao" value="'+i+'"> '+i+'</label>').join('') +
+
+      '<h3>Arroz (máx. 2)</h3>' +
+      pratoPrincipal.filter(i => i.includes("Arroz"))
+        .map(i => '<label><input type="checkbox" class="arroz" value="'+i+'"> '+i+'</label>').join('') +
+
+      '<h3>Outros</h3>' +
+      pratoPrincipal.filter(i => !i.includes("Feijão") && !i.includes("Arroz"))
+        .map(i => '<label><input type="checkbox" value="'+i+'"> '+i+'</label>').join('') +
+
+      '<h3>Acompanhamentos</h3>' +
+      acompanhamentos.map(i => {
+        if (i === "Vinagrete") {
+          return '<label><input type="checkbox" class="vinagrete" value="'+i+'"> '+i+'</label>';
+        } else {
+          return '<label><input type="checkbox" class="exclusivo" value="'+i+'"> '+i+'</label>';
+        }
+      }).join('') +
+
       '<h3>Proteínas (máx. 2)</h3>' +
       proteinas.map(i => '<label><input type="checkbox" class="proteina" value="'+i+'"> '+i+'</label>').join('') +
+
       '<h3>Batata frita (opcional)</h3>' +
       '<label><input type="radio" name="batata'+q+'" value="P"> Pequena (R$5)</label>' +
       '<label><input type="radio" name="batata'+q+'" value="M"> Média (R$8)</label>' +
       '<label><input type="radio" name="batata'+q+'" value="G"> Grande (R$10)</label>' +
+
       '<h3>Deseja talher?</h3>' +
       '<label><input type="radio" name="talher'+q+'" value="Sim"> Sim</label>' +
       '<label><input type="radio" name="talher'+q+'" value="Não"> Não</label>' +
+
       '<h3>Pagamento</h3>' +
       '<label><input type="radio" name="pagamento'+q+'" value="PIX"> PIX</label>' +
       '<label><input type="radio" name="pagamento'+q+'" value="Cartão"> Cartão</label>' +
       '<label><input type="radio" name="pagamento'+q+'" value="À vista"> À vista</label>' +
+
       '<div class="total">Total quentinha ' + q + ': R$ <span class="totalQuentinha">0</span>,00</div>';
 
     container.appendChild(div);
 
+    limitarSelecoes(div, ".feijao", 2);
+    limitarSelecoes(div, ".arroz", 2);
     limitarSelecoes(div, ".proteina", 2);
-    limitarSelecoes(div, ".acomp", 2);
+
+    div.querySelectorAll(".exclusivo").forEach(cb => {
+      cb.addEventListener("change", () => {
+        if (cb.checked) {
+          div.querySelectorAll(".exclusivo").forEach(outro => {
+            if (outro !== cb) outro.checked = false;
+          });
+        }
+      });
+    });
 
     div.querySelectorAll("input, select").forEach(el =>
       el.addEventListener("change", calcularTotal)
@@ -204,73 +238,11 @@ function calcularTotal() {
 
   document.getElementById("totalGeral").innerText = totalGeral;
 }
-
-function enviar() {
-  const nomeCliente = document.getElementById("nomeCliente").value;
-  const endereco = document.getElementById("endereco").value;
-
-  if(!nomeCliente || !endereco) {
-    alert("Preencha o nome do cliente e o endereço");
-    return;
-  }
-
-  const enderecoLower = endereco.toLowerCase();
-  const bairroEspecial = enderecoLower.includes("arnon de melo");
-
-  let msg = "*Pedido - ${CONFIG.nomeLoja}*\\n\\n";
-  msg += "*Nome:* " + nomeCliente + "\\n";
-  msg += "*Endereço:* " + endereco + "\\n\\n";
-
-  let totalGeral = 0;
-
-  document.querySelectorAll("#quentinhasContainer .box").forEach((div, idx) => {
-    msg += "*Quentinha " + (idx+1) + "*\\n";
-
-    const tipo = div.querySelector(".tipoQuentinha").value;
-    let total = 0;
-
-    if (tipo) {
-      total += bairroEspecial
-        ? precosQuentinha[tipo].bairro
-        : precosQuentinha[tipo].fora;
-      msg += "Tipo: " + (tipo==="normal"?"Normal":"G") + "\\n";
-    }
-
-    const batata = div.querySelector("input[name^=batata]:checked");
-    if(batata) {
-      total += precosBatata[batata.value];
-      msg += "Batata: " + batata.value + "\\n";
-    }
-
-    msg += "Total: R$ " + total + "\\n\\n";
-    totalGeral += total;
-  });
-
-  msg += "*Total geral: R$ " + totalGeral + "*";
-
-  const url = "https://wa.me/" + numeroWhats + "?text=" + encodeURIComponent(msg);
-  window.open(url);
-}
 </script>
 
 </body>
 </html>
   `);
-});
-
-app.get("/manifest.json", (req, res) => {
-  res.json({
-    name: "Comida Caseira EdCasa",
-    short_name: "EdCasa",
-    start_url: "/",
-    display: "standalone",
-    background_color: "#000000",
-    theme_color: "#000000",
-    icons: [
-      { src: "/logo.png", sizes: "192x192", type: "image/png" },
-      { src: "/logo.png", sizes: "512x512", type: "image/png" }
-    ]
-  });
 });
 
 app.listen(PORT, () => {

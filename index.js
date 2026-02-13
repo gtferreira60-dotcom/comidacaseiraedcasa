@@ -138,7 +138,6 @@ function gerarQuentinhas() {
   for (let q = 1; q <= num; q++) {
     const div = document.createElement("div");
     div.className = "box";
-    div.id = "quentinha" + q;
 
     div.innerHTML =
       '<h2>Quentinha ' + q + '</h2>' +
@@ -148,29 +147,20 @@ function gerarQuentinhas() {
       '<option value="grande">G</option>' +
       '</select>' +
 
-      '<h3>Feijão (máx. 2)</h3>' +
-      pratoPrincipal.filter(i => i.includes("Feijão"))
-        .map(i => '<label><input type="checkbox" class="feijao" value="'+i+'"> '+i+'</label>').join('') +
-
-      '<h3>Arroz (máx. 2)</h3>' +
-      pratoPrincipal.filter(i => i.includes("Arroz"))
-        .map(i => '<label><input type="checkbox" class="arroz" value="'+i+'"> '+i+'</label>').join('') +
-
-      '<h3>Outros</h3>' +
-      pratoPrincipal.filter(i => !i.includes("Feijão") && !i.includes("Arroz"))
-        .map(i => '<label><input type="checkbox" value="'+i+'"> '+i+'</label>').join('') +
+      '<h3>Prato principal</h3>' +
+      pratoPrincipal.map(i =>
+        '<label><input type="checkbox" class="prato" value="'+i+'"> '+i+'</label>'
+      ).join('') +
 
       '<h3>Acompanhamentos</h3>' +
-      acompanhamentos.map(i => {
-        if (i === "Vinagrete") {
-          return '<label><input type="checkbox" class="vinagrete" value="'+i+'"> '+i+'</label>';
-        } else {
-          return '<label><input type="checkbox" class="exclusivo" value="'+i+'"> '+i+'</label>';
-        }
-      }).join('') +
+      acompanhamentos.map(i =>
+        '<label><input type="checkbox" class="acomp" value="'+i+'"> '+i+'</label>'
+      ).join('') +
 
       '<h3>Proteínas (máx. 2)</h3>' +
-      proteinas.map(i => '<label><input type="checkbox" class="proteina" value="'+i+'"> '+i+'</label>').join('') +
+      proteinas.map(i =>
+        '<label><input type="checkbox" class="proteina" value="'+i+'"> '+i+'</label>'
+      ).join('') +
 
       '<h3>Batata frita (opcional)</h3>' +
       '<label><input type="radio" name="batata'+q+'" value="P"> Pequena (R$5)</label>' +
@@ -190,19 +180,7 @@ function gerarQuentinhas() {
 
     container.appendChild(div);
 
-    limitarSelecoes(div, ".feijao", 2);
-    limitarSelecoes(div, ".arroz", 2);
     limitarSelecoes(div, ".proteina", 2);
-
-    div.querySelectorAll(".exclusivo").forEach(cb => {
-      cb.addEventListener("change", () => {
-        if (cb.checked) {
-          div.querySelectorAll(".exclusivo").forEach(outro => {
-            if (outro !== cb) outro.checked = false;
-          });
-        }
-      });
-    });
 
     div.querySelectorAll("input, select").forEach(el =>
       el.addEventListener("change", calcularTotal)
@@ -237,6 +215,65 @@ function calcularTotal() {
   });
 
   document.getElementById("totalGeral").innerText = totalGeral;
+}
+
+function enviar() {
+  const nomeCliente = document.getElementById("nomeCliente").value;
+  const endereco = document.getElementById("endereco").value;
+
+  if (!nomeCliente || !endereco) {
+    alert("Preencha o nome do cliente e o endereço");
+    return;
+  }
+
+  const enderecoLower = endereco.toLowerCase();
+  const bairroEspecial = enderecoLower.includes("arnon de melo");
+  const linkMapa = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(endereco);
+
+  let msg = "Pedido - ${CONFIG.nomeLoja}\\n\\n";
+  msg += "Nome do cliente: " + nomeCliente + "\\n";
+  msg += "Endereço: " + endereco + " (abrir no mapa: " + linkMapa + ")\\n\\n";
+
+  let totalGeral = 0;
+
+  document.querySelectorAll("#quentinhasContainer .box").forEach((div, idx) => {
+    msg += "Quentinha " + (idx+1) + "\\n";
+
+    const tipo = div.querySelector(".tipoQuentinha").value;
+    let total = 0;
+
+    if (tipo) {
+      total += bairroEspecial
+        ? precosQuentinha[tipo].bairro
+        : precosQuentinha[tipo].fora;
+
+      msg += "Tipo: " + (tipo==="normal"?"Normal":"G") + "\\n";
+    }
+
+    div.querySelectorAll("input[type=checkbox]:checked").forEach(cb => {
+      msg += "• " + cb.value + "\\n";
+    });
+
+    const talher = div.querySelector("input[name^=talher]:checked");
+    if (talher) msg += "Deseja talher: " + talher.value + "\\n";
+
+    const pagamento = div.querySelector("input[name^=pagamento]:checked");
+    if (pagamento) msg += "Pagamento: " + pagamento.value + "\\n";
+
+    const batata = div.querySelector("input[name^=batata]:checked");
+    if (batata) {
+      total += precosBatata[batata.value];
+      msg += "Batata: " + batata.value + "\\n";
+    }
+
+    msg += "Total quentinha " + (idx+1) + ": R$ " + total + "\\n\\n";
+    totalGeral += total;
+  });
+
+  msg += "Total geral: R$ " + totalGeral;
+
+  const url = "https://wa.me/" + numeroWhats + "?text=" + encodeURIComponent(msg);
+  window.open(url, "_blank");
 }
 </script>
 

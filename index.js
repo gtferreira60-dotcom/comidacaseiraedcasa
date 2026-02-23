@@ -1,8 +1,13 @@
 const express = require("express");
+const sqlite3 = require("sqlite3").verbose();
+const path = require("path");
+
 const app = express();
 const PORT = 3000;
 
 app.use(express.static("public"));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 /* CONFIGURAÇÕES */
 const CONFIG = {
@@ -42,9 +47,45 @@ const proteinas = [
   "Fígado acebolado",
   "Galinha guisada",
   "Frango no forno",
+  "Peixe frito",
+  "Bife ao molho",
   "Bisteca suína no forno",
   "Boi guisado"
 ];
+
+const db = new sqlite3.Database("./database.sqlite");
+
+db.run(`
+  CREATE TABLE IF NOT EXISTS cardapio (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    categoria TEXT,
+    nome TEXT,
+    preco REAL
+  )
+`);
+
+app.get("/api/cardapio-organizado", (req, res) => {
+  db.all("SELECT * FROM cardapio", (err, rows) => {
+    if (err) {
+      return res.status(500).json({ erro: "Erro no banco" });
+    }
+
+    const organizado = {
+      prato: [],
+      acompanhamento: [],
+      proteina: []
+    };
+
+    rows.forEach(item => {
+      if (organizado[item.categoria]) {
+        organizado[item.categoria].push(item.nome);
+      }
+    });
+
+    res.json(organizado);
+  });
+});
+
 
 app.get("/", (req, res) => {
   res.send(`
@@ -112,9 +153,17 @@ Total geral: R$ <span id="totalGeral">0</span>,00
 <script>
 const precosQuentinha = ${JSON.stringify(precosQuentinha)};
 const precosBatata = ${JSON.stringify(precosBatata)};
-const pratoPrincipal = ${JSON.stringify(pratoPrincipal)};
-const acompanhamentos = ${JSON.stringify(acompanhamentos)};
-const proteinas = ${JSON.stringify(proteinas)};
+let pratoPrincipal = [];
+let acompanhamentos = [];
+let proteinas = [];
+
+fetch("/api/cardapio-organizado")
+  .then(res => res.json())
+  .then(dados => {
+    pratoPrincipal = dados.prato || [];
+    acompanhamentos = dados.acompanhamento || [];
+    proteinas = dados.proteina || [];
+  });
 const numeroWhats = "${CONFIG.whatsapp}";
 
 function limitarSelecoes(container, classe, max) {
@@ -281,6 +330,51 @@ function enviar() {
 </html>
   `);
 });
+
+app.get("/api/cardapio", (req, res) => {
+  db.all("SELECT * FROM cardapio", (err, rows) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ erro: "Erro ao buscar cardápio" });
+    }
+    res.json(rows);
+  });
+});
+
+app.post("/api/cardapio", (req, res) => {
+  const { categoria, nome, preco } = req.body;
+
+  if (!categoria || !nome || preco == null) {
+    return res.status(400).json({ erro: "Dados incompletos" });
+  }
+
+  db.run(
+    "INSERT INTO cardapio (categoria, nome, preco) VALUES (?, ?, ?)",
+    [categoria, nome, preco],
+    function (err) {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ erro: "Erro ao salvar" });
+      }
+      res.json({ id: this.lastID });
+    }
+  );
+});
+
+app.delete("/api/cardapio/:id", (req, res) => {
+  db.run(
+    "DELETE FROM cardapio WHERE id = ?",
+    [req.params.id],
+    function (err) {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ erro: "Erro ao remover" });
+      }
+      res.json({ ok: true });
+    }
+  );
+});
+
 
 app.listen(PORT, () => {
   console.log("Servidor rodando em http://localhost:" + PORT);

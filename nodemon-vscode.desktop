@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Projeto Node
+Comment=Abrir projeto com nodemon
+Exec=gnome-terminal -- bash -c "cd '/home/gui/Área de trabalho/edcasa/comidacaseiraedcasa' && code . && nodemon index.js; exec bash"
+Icon=code
+Terminal=false
+Type=Application
